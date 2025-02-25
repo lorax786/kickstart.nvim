@@ -3,7 +3,7 @@
 =====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
 =====================================================================
-========                                    .-----.          ========
+==previous previous ======                                    .-----.          ========
 ========         .----------------------.   | === |          ========
 ========         |.-""""""""""""""""""-.|   |-----|          ========
 ========         ||                    ||   | === |          ========
@@ -83,6 +83,7 @@ I hope you enjoy your Neovim journey,
 
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
+--
 
 -- Set <space> as the leader key
 -- See `:help mapleader`
@@ -91,18 +92,26 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
 --  For more options, you can see `:help option-list`
 
--- Make line numbers default
+-- Set spacing preference
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.expandtab = true
+
+-- Set indent and auto code closure preference
+vim.opt.smartindent = true
+vim.opt.wrap = false
+
+-- Make line numbers default and relative line number
 vim.opt.number = true
--- You can also add relative line numbers, to help with jumping.
---  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -135,7 +144,7 @@ vim.opt.signcolumn = 'yes'
 vim.opt.updatetime = 250
 
 -- Decrease mapped sequence wait time
-vim.opt.timeoutlen = 300
+vim.opt.timeoutlen = 500
 
 -- Configure how new splits should be opened
 vim.opt.splitright = true
@@ -158,6 +167,10 @@ vim.opt.scrolloff = 10
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
+
+-- Set keymap for directory view
+vim.keymap.set('n', '<leader>pv', vim.cmd.Ex, { desc = 'Goto [P]roject directory [V]iew' })
+-- Make line numbers default and relative line number
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
@@ -325,6 +338,8 @@ require('lazy').setup({
 
       -- Document existing key chains
       spec = {
+        { '<leader>p', group = '[P]roject', mode = { 'n' } },
+        { '<leader>ph', group = '[P]roject [H]arpoon', mode = { 'n' } },
         { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
         { '<leader>d', group = '[D]ocument' },
         { '<leader>r', group = '[R]ename' },
@@ -889,20 +904,84 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    'rose-pine/neovim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
       ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
+      require('rose-pine').setup {
         styles = {
-          comments = { italic = false }, -- Disable italics in comments
+
+          variant = 'auto', -- auto, main, moon, or dawn
+          dark_variant = 'main', -- main, moon, or dawn
+          dim_inactive_windows = false,
+          extend_background_behind_borders = true,
+
+          enable = {
+            terminal = true,
+            legacy_highlights = true, -- Improve compatibility for previous versions of Neovim
+            migrations = true, -- Handle deprecated options automatically
+          },
+
+          styles = {
+            bold = true,
+            italic = true,
+            transparency = false,
+          },
+
+          groups = {
+            border = 'muted',
+            link = 'iris',
+            panel = 'surface',
+
+            error = 'love',
+            hint = 'iris',
+            info = 'foam',
+            note = 'pine',
+            todo = 'rose',
+            warn = 'gold',
+
+            git_add = 'foam',
+            git_change = 'rose',
+            git_delete = 'love',
+            git_dirty = 'rose',
+            git_ignore = 'muted',
+            git_merge = 'iris',
+            git_rename = 'pine',
+            git_stage = 'iris',
+            git_text = 'rose',
+            git_untracked = 'subtle',
+
+            h1 = 'iris',
+            h2 = 'foam',
+            h3 = 'rose',
+            h4 = 'gold',
+            h5 = 'pine',
+            h6 = 'foam',
+          },
+
+          highlight_groups = {
+            -- Comment = { fg = "foam" },
+            -- VertSplit = { fg = "muted", bg = "muted" },
+          },
+
+          before_highlight = function(group, highlight, palette)
+            -- Disable all undercurls
+            -- if highlight.undercurl then
+            --     highlight.undercurl = false
+            -- end
+            --
+            -- Change palette colour
+            -- if highlight.fg == palette.pine then
+            --     highlight.fg = palette.foam
+            -- end
+          end,
         },
       }
 
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'rose-pine'
     end,
   },
 
@@ -972,6 +1051,60 @@ require('lazy').setup({
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
 
+  -- NOTE: I am custom adding in Harpoon for easier navigation between project files
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      local harpoon = require 'harpoon'
+      harpoon:setup {}
+      local conf = require('telescope.config').values
+      local function toggle_telescope(harpoon_files)
+        local file_paths = {}
+        for _, item in ipairs(harpoon_files.items) do
+          table.insert(file_paths, item.value)
+        end
+        require('telescope.pickers')
+          .new({}, {
+            prompt_title = 'Harpoon',
+            finder = require('telescope.finders').new_table {
+              results = file_paths,
+            },
+            previewer = conf.file_previewer {},
+            sorter = conf.generic_sorter {},
+          })
+          :find()
+      end
+
+      vim.keymap.set('n', '<leader>ph', function()
+        toggle_telescope(harpoon:list())
+      end, { desc = 'Open [P]roject [H]arpoon window' })
+      vim.keymap.set('n', '<leader>pha', function()
+        harpoon:list():append()
+      end, { desc = 'Add file to project harpoon window' })
+
+      vim.keymap.set('n', '<leader>phj', function()
+        harpoon:list():select(1)
+      end, { desc = 'Goto first file in project harpoon window' })
+      vim.keymap.set('n', '<leader>phk', function()
+        harpoon:list():select(2)
+      end, { desc = 'Goto second file in project harpoon window' })
+      vim.keymap.set('n', '<leader>phl', function()
+        harpoon:list():select(3)
+      end, { desc = 'Goto third file in project harpoon window' })
+      vim.keymap.set('n', '<leader>ph;', function()
+        harpoon:list():select(4)
+      end, { desc = 'Goto fourth file in project harpoon window' })
+
+      vim.keymap.set('n', '<leader>phb', function()
+        harpoon:list():prev()
+      end, { desc = 'Goto previous project file' })
+      vim.keymap.set('n', '<leader>phn', function()
+        harpoon:list():next()
+      end, { desc = 'Goto next project file' })
+    end,
+  },
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
