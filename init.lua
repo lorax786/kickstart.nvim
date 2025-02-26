@@ -144,7 +144,7 @@ vim.opt.signcolumn = 'yes'
 vim.opt.updatetime = 250
 
 -- Decrease mapped sequence wait time
-vim.opt.timeoutlen = 500
+vim.opt.timeoutlen = 750
 
 -- Configure how new splits should be opened
 vim.opt.splitright = true
@@ -1081,7 +1081,7 @@ require('lazy').setup({
         toggle_telescope(harpoon:list())
       end, { desc = 'Open [P]roject [H]arpoon window' })
       vim.keymap.set('n', '<leader>pha', function()
-        harpoon:list():append()
+        harpoon:list():add()
       end, { desc = 'Add file to project harpoon window' })
 
       vim.keymap.set('n', '<leader>phj', function()
